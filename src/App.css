@@ -261,12 +261,23 @@
 .config-card,
 .results-card,
 .status-card,
+.upload-card,
+.config-card,
+.results-card,
+.status-card,
 .action-card {
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
   width: 100%;
+}
+
+.upload-card,
+.config-card,
+.results-card,
+.status-card,
+.action-card {
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .upload-card:hover,
@@ -299,6 +310,11 @@
   border: 2px solid transparent;
   background-clip: padding-box;
   border-image: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3)) 1;
+  border-radius: 16px !important;
+}
+
+.action-card.ant-card-bordered {
+  border: none !important;
 }
 
 /* 卡片标题样式 */

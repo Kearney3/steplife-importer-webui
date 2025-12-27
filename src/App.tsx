@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { ConfigProvider, theme as antdTheme, Layout, Button, Space, Steps, Card, Switch, Modal } from 'antd';
-import { SunOutlined, MoonOutlined, UploadOutlined, SettingOutlined, PlayCircleOutlined, CheckCircleOutlined, GithubOutlined } from '@ant-design/icons';
+import { ConfigProvider, theme as antdTheme, Layout, Button, Space, Steps, Card, Switch, Modal, Tabs } from 'antd';
+import { SunOutlined, MoonOutlined, UploadOutlined, SettingOutlined, PlayCircleOutlined, CheckCircleOutlined, GithubOutlined, MergeCellsOutlined } from '@ant-design/icons';
 import zhCN from 'antd/locale/zh_CN';
 import { Config, FileProcessStatus, Point } from './types';
 import FileUpload from './components/FileUpload';
 import ConfigPanel from './components/ConfigPanel';
 import StatusPanel from './components/StatusPanel';
+import CSVMerge from './components/CSVMerge';
 import { parseFile } from './utils/fileParser';
 import { convertToStepLife } from './utils/processor';
 import { generateCSV, downloadCSV } from './utils/csv';
@@ -31,6 +32,9 @@ function App() {
     const savedTheme = localStorage.getItem('theme');
     return (savedTheme === 'dark') ? 'dark' : 'light';
   });
+
+  // 工具模式：'convert' 或 'merge'
+  const [toolMode, setToolMode] = useState<'convert' | 'merge'>('convert');
 
   const [config, setConfig] = useState<Config>(defaultConfig);
   const [files, setFiles] = useState<File[]>([]);
@@ -513,141 +517,169 @@ function App() {
               </div>
             </Card>
 
-            {/* 步骤指示器 */}
-            <Card className="steps-card" style={{ marginBottom: 24 }}>
-              <Steps
-                current={getCurrentStep()}
+            {/* 工具切换选项卡 */}
+            <Card style={{ marginBottom: 24 }}>
+              <Tabs
+                activeKey={toolMode}
+                onChange={(key) => setToolMode(key as 'convert' | 'merge')}
                 items={[
                   {
-                    title: '选择文件',
-                    description: '上传 GPX/KML/OVJSN 文件',
-                    icon: <UploadOutlined />,
-                    status: getStepStatus(0),
+                    key: 'convert',
+                    label: (
+                      <Space>
+                        <UploadOutlined />
+                        轨迹转换工具
+                      </Space>
+                    ),
+                    children: (
+                      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+                        {/* 步骤指示器 */}
+                        <Card className="steps-card" style={{ marginBottom: 0 }}>
+                          <Steps
+                            current={getCurrentStep()}
+                            items={[
+                              {
+                                title: '选择文件',
+                                description: '上传 GPX/KML/OVJSN 文件',
+                                icon: <UploadOutlined />,
+                                status: getStepStatus(0),
+                              },
+                              {
+                                title: '配置参数',
+                                description: '设置时间、海拔、速度等参数',
+                                icon: <SettingOutlined />,
+                                status: getStepStatus(1),
+                              },
+                              {
+                                title: '开始处理',
+                                description: '转换并生成 CSV 文件',
+                                icon: <PlayCircleOutlined />,
+                                status: getStepStatus(2),
+                              },
+                              {
+                                title: '下载结果',
+                                description: '获取处理完成的 CSV 文件',
+                                icon: <CheckCircleOutlined />,
+                                status: getStepStatus(3),
+                              },
+                            ]}
+                          />
+                        </Card>
+
+                        {/* 文件上传区域 */}
+                        <Card
+                          title={
+                            <Space>
+                              <UploadOutlined />
+                              <span>文件选择</span>
+                              {files.length > 0 && (
+                                <span style={{ fontSize: '14px', color: '#666' }}>
+                                  ({files.length} 个文件)
+                                </span>
+                              )}
+                            </Space>
+                          }
+                          className="upload-card"
+                          extra={
+                            files.length > 1 && (
+                              <Space>
+                                <span style={{ fontSize: '13px', color: '#666' }}>合并模式</span>
+                                <Switch
+                                  checked={mergeMode}
+                                  onChange={handleMergeModeChange}
+                                  checkedChildren="开启"
+                                  unCheckedChildren="关闭"
+                                />
+                              </Space>
+                            )
+                          }
+                        >
+                          {mergeMode && files.length > 1 && (
+                            <div style={{
+                              marginBottom: 16,
+                              padding: '12px 16px',
+                              background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1))',
+                              borderRadius: 8,
+                              border: '1px solid rgba(102, 126, 234, 0.2)'
+                            }}>
+                              <div style={{ fontSize: '13px', color: '#374151', lineHeight: '1.6' }}>
+                                <strong>合并模式已开启：</strong>将按照文件顺序（1, 2, 3...）合并所有文件的轨迹点，生成一个统一的CSV文件。您可以拖拽文件来调整顺序。
+                              </div>
+                            </div>
+                          )}
+                          <FileUpload
+                            files={files}
+                            onFilesChange={(newFiles) => {
+                              setFiles(newFiles);
+                              // 重置文件状态
+                              setFileStatuses([]);
+                              setMergedFileInfo(null);
+                              // 如果文件数量少于2个，自动关闭合并模式
+                              if (newFiles.length < 2) {
+                                setMergeMode(false);
+                              }
+                            }}
+                            fileStatuses={fileStatuses}
+                            onDownload={handleDownload}
+                            mergeMode={mergeMode}
+                            mergedFileInfo={mergedFileInfo}
+                          />
+                        </Card>
+
+                        {/* 配置面板 */}
+                        <Card
+                          title={
+                            <Space>
+                              <SettingOutlined />
+                              <span>参数设置</span>
+                            </Space>
+                          }
+                          className="config-card"
+                        >
+                          <ConfigPanel config={config} onConfigChange={setConfig} />
+                        </Card>
+
+                        {/* 处理控制区域 */}
+                        {files.length > 0 && (
+                          <Card className="action-card">
+                            <div style={{ textAlign: 'center', padding: '20px 0' }}>
+                              <Button
+                                type="primary"
+                                size="large"
+                                onClick={handleProcess}
+                                disabled={files.length === 0}
+                                style={{ minWidth: 200, height: 48 }}
+                                icon={<PlayCircleOutlined />}
+                              >
+                                开始处理
+                              </Button>
+                            </div>
+                          </Card>
+                        )}
+
+                        {/* 状态面板 */}
+                        <Card
+                          title="处理状态"
+                          className="status-card"
+                        >
+                          <StatusPanel status={status} progress={progress} logs={logs} />
+                        </Card>
+                      </Space>
+                    ),
                   },
                   {
-                    title: '配置参数',
-                    description: '设置时间、海拔、速度等参数',
-                    icon: <SettingOutlined />,
-                    status: getStepStatus(1),
-                  },
-                  {
-                    title: '开始处理',
-                    description: '转换并生成 CSV 文件',
-                    icon: <PlayCircleOutlined />,
-                    status: getStepStatus(2),
-                  },
-                  {
-                    title: '下载结果',
-                    description: '获取处理完成的 CSV 文件',
-                    icon: <CheckCircleOutlined />,
-                    status: getStepStatus(3),
+                    key: 'merge',
+                    label: (
+                      <Space>
+                        <MergeCellsOutlined />
+                        CSV合并工具
+                      </Space>
+                    ),
+                    children: <CSVMerge />,
                   },
                 ]}
               />
             </Card>
-
-            {/* 垂直堆叠的卡片布局 */}
-            <Space direction="vertical" size="large" style={{ width: '100%' }}>
-              {/* 文件上传区域 */}
-              <Card
-                title={
-                  <Space>
-                    <UploadOutlined />
-                    <span>文件选择</span>
-                    {files.length > 0 && (
-                      <span style={{ fontSize: '14px', color: '#666' }}>
-                        ({files.length} 个文件)
-                      </span>
-                    )}
-                  </Space>
-                }
-                className="upload-card"
-                extra={
-                  files.length > 1 && (
-                    <Space>
-                      <span style={{ fontSize: '13px', color: '#666' }}>合并模式</span>
-                      <Switch
-                        checked={mergeMode}
-                        onChange={handleMergeModeChange}
-                        checkedChildren="开启"
-                        unCheckedChildren="关闭"
-                      />
-                    </Space>
-                  )
-                }
-              >
-                {mergeMode && files.length > 1 && (
-                  <div style={{ 
-                    marginBottom: 16, 
-                    padding: '12px 16px', 
-                    background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1))',
-                    borderRadius: 8,
-                    border: '1px solid rgba(102, 126, 234, 0.2)'
-                  }}>
-                    <div style={{ fontSize: '13px', color: '#374151', lineHeight: '1.6' }}>
-                      <strong>合并模式已开启：</strong>将按照文件顺序（1, 2, 3...）合并所有文件的轨迹点，生成一个统一的CSV文件。您可以拖拽文件来调整顺序。
-                    </div>
-                  </div>
-                )}
-                <FileUpload
-                  files={files}
-                  onFilesChange={(newFiles) => {
-                    setFiles(newFiles);
-                    // 重置文件状态
-                    setFileStatuses([]);
-                    setMergedFileInfo(null);
-                    // 如果文件数量少于2个，自动关闭合并模式
-                    if (newFiles.length < 2) {
-                      setMergeMode(false);
-                    }
-                  }}
-                  fileStatuses={fileStatuses}
-                  onDownload={handleDownload}
-                  mergeMode={mergeMode}
-                  mergedFileInfo={mergedFileInfo}
-                />
-              </Card>
-
-              {/* 配置面板 */}
-              <Card
-                title={
-                  <Space>
-                    <SettingOutlined />
-                    <span>参数设置</span>
-                  </Space>
-                }
-                className="config-card"
-              >
-                <ConfigPanel config={config} onConfigChange={setConfig} />
-              </Card>
-
-              {/* 处理控制区域 */}
-              {files.length > 0 && (
-                <Card className="action-card">
-                  <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                    <Button
-                      type="primary"
-                      size="large"
-                      onClick={handleProcess}
-                      disabled={files.length === 0}
-                      style={{ minWidth: 200, height: 48 }}
-                      icon={<PlayCircleOutlined />}
-                    >
-                      开始处理
-                    </Button>
-                  </div>
-                </Card>
-              )}
-
-              {/* 状态面板 */}
-              <Card
-                title="处理状态"
-                className="status-card"
-              >
-                <StatusPanel status={status} progress={progress} logs={logs} />
-              </Card>
-
-            </Space>
           </div>
         </Content>
       </Layout>

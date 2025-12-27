@@ -8,27 +8,72 @@ interface ConfigPanelProps {
   onConfigChange: (config: Config) => void;
 }
 
-// 常用时区列表
-const timezones = [
-  { value: 'Asia/Shanghai', label: '中国标准时间 (UTC+8)' },
-  { value: 'Asia/Tokyo', label: '日本标准时间 (UTC+9)' },
-  { value: 'Asia/Seoul', label: '韩国标准时间 (UTC+9)' },
-  { value: 'Asia/Singapore', label: '新加坡时间 (UTC+8)' },
-  { value: 'Asia/Kolkata', label: '印度标准时间 (UTC+5:30)' },
-  { value: 'Europe/London', label: '伦敦时间 (UTC+0/+1)' },
-  { value: 'Europe/Paris', label: '巴黎时间 (UTC+1/+2)' },
-  { value: 'Europe/Berlin', label: '柏林时间 (UTC+1/+2)' },
-  { value: 'Europe/Moscow', label: '莫斯科时间 (UTC+3)' },
-  { value: 'America/New_York', label: '纽约时间 (UTC-5/-4)' },
-  { value: 'America/Chicago', label: '芝加哥时间 (UTC-6/-5)' },
-  { value: 'America/Denver', label: '丹佛时间 (UTC-7/-6)' },
-  { value: 'America/Los_Angeles', label: '洛杉矶时间 (UTC-8/-7)' },
-  { value: 'America/Toronto', label: '多伦多时间 (UTC-5/-4)' },
-  { value: 'Australia/Sydney', label: '悉尼时间 (UTC+10/+11)' },
-  { value: 'Australia/Melbourne', label: '墨尔本时间 (UTC+10/+11)' },
-  { value: 'Pacific/Auckland', label: '奥克兰时间 (UTC+12/+13)' },
-  { value: 'UTC', label: '协调世界时 (UTC+0)' },
-];
+// 获取所有可用的时区列表
+function getAllTimezones(): { systemTimezone: string; timezones: Array<{ value: string; label: string }> } {
+  try {
+    // 使用 Intl API 获取所有支持的时区
+    // @ts-ignore - supportedValuesOf 可能在某些 TypeScript 版本中未定义类型
+    const timezones: string[] = (Intl as any).supportedValuesOf?.('timeZone') || [];
+    const systemTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    
+    // 如果浏览器不支持 supportedValuesOf，使用常用时区列表
+    if (timezones.length === 0) {
+      const commonTimezones = [
+        'Asia/Shanghai', 'Asia/Tokyo', 'Asia/Seoul', 'Asia/Singapore',
+        'Asia/Kolkata', 'Europe/London', 'Europe/Paris', 'Europe/Berlin',
+        'Europe/Moscow', 'America/New_York', 'America/Chicago', 'America/Denver',
+        'America/Los_Angeles', 'America/Toronto', 'Australia/Sydney',
+        'Australia/Melbourne', 'Pacific/Auckland', 'UTC'
+      ];
+      timezones.push(...commonTimezones);
+    }
+    
+    // 格式化时区显示名称
+    const formatTimezoneLabel = (tz: string): string => {
+      try {
+        const now = new Date();
+        // 获取 UTC 偏移量
+        const utcFormatter = new Intl.DateTimeFormat('en-US', {
+          timeZone: tz,
+          timeZoneName: 'shortOffset',
+        });
+        const utcParts = utcFormatter.formatToParts(now);
+        const offset = utcParts.find(p => p.type === 'timeZoneName')?.value || '';
+        
+        return `${tz} (${offset})`;
+      } catch {
+        return tz;
+      }
+    };
+    
+    // 创建时区选项列表
+    const timezoneOptions = timezones.map((tz: string) => ({
+      value: tz,
+      label: formatTimezoneLabel(tz),
+    }));
+    
+    // 按标签排序
+    timezoneOptions.sort((a: { value: string; label: string }, b: { value: string; label: string }) => 
+      a.label.localeCompare(b.label)
+    );
+    
+    return {
+      systemTimezone,
+      timezones: timezoneOptions,
+    };
+  } catch {
+    // 如果浏览器不支持，返回常用时区列表
+    return {
+      systemTimezone: 'Asia/Shanghai',
+      timezones: [
+        { value: 'Asia/Shanghai', label: 'Asia/Shanghai (CST)' },
+        { value: 'UTC', label: 'UTC (UTC)' },
+      ],
+    };
+  }
+}
+
+const { systemTimezone, timezones } = getAllTimezones();
 
 export default function ConfigPanel({ config, onConfigChange }: ConfigPanelProps) {
   const [form] = Form.useForm();
@@ -159,7 +204,8 @@ export default function ConfigPanel({ config, onConfigChange }: ConfigPanelProps
           <Form.Item name="timezone" style={{ marginBottom: 0 }}>
             <Select
               showSearch
-              placeholder="选择时区"
+              placeholder={`不选择则使用系统时区 (${systemTimezone})`}
+              allowClear
               optionFilterProp="label"
               filterOption={(input, option) => {
                 const label = typeof option?.label === 'string' ? option.label : String(option?.label ?? '');
@@ -190,7 +236,7 @@ export default function ConfigPanel({ config, onConfigChange }: ConfigPanelProps
               <li style={{ marginBottom: 4 }}>如果设置了结束时间，系统会在开始和结束时间之间均匀分配时间</li>
               <li style={{ marginBottom: 4 }}>如果设置了时间间隔，系统会按照指定间隔分配时间（负数会反转时间顺序）</li>
               <li style={{ marginBottom: 4 }}>如果开始时间大于结束时间，系统会自动反转轨迹点顺序</li>
-              <li style={{ marginBottom: 4 }}>时区设置用于处理时间转换，确保时间戳正确对应所选时区</li>
+              <li style={{ marginBottom: 4 }}>时区设置用于处理时间转换，不选择时使用系统时区</li>
               <li>如果都没有设置，所有时间统一为开始时间</li>
             </ul>
           }

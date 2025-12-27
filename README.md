@@ -125,7 +125,7 @@ npm run preview
 
 ## 技术栈
 
-- **React 18** - UI 框架
+- **React 19** - UI 框架
 - **Ant Design 5.x** - 企业级 UI 组件库
 - **TypeScript** - 类型安全
 - **Vite** - 构建工具

@@ -22,7 +22,7 @@ const defaultConfig: Config = {
   defaultAltitude: 0,
   speedMode: 'auto',
   manualSpeed: 1.5,
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Shanghai',
+  timezone: undefined, // 不选择时区时使用系统时区
 };
 
 function App() {

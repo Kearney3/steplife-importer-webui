@@ -434,6 +434,20 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
+.file-item-card:active {
+  cursor: grabbing !important;
+}
+
+.file-item-dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+.file-item-drag-over {
+  border-top: 3px solid #667eea !important;
+  background-color: rgba(102, 126, 234, 0.1) !important;
+}
+
 .file-item-card-with-status {
   background-color: rgba(255, 255, 255, 0.6);
   border-color: rgba(0, 0, 0, 0.1);

@@ -43,3 +43,8 @@ export interface FileProcessStatus {
   finalPoints?: number;
   insertedPoints?: number;
 }
+
+export interface FileWithIndex {
+  file: File;
+  index: number;
+}

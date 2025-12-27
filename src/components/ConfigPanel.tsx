@@ -8,6 +8,28 @@ interface ConfigPanelProps {
   onConfigChange: (config: Config) => void;
 }
 
+// 常用时区列表
+const timezones = [
+  { value: 'Asia/Shanghai', label: '中国标准时间 (UTC+8)' },
+  { value: 'Asia/Tokyo', label: '日本标准时间 (UTC+9)' },
+  { value: 'Asia/Seoul', label: '韩国标准时间 (UTC+9)' },
+  { value: 'Asia/Singapore', label: '新加坡时间 (UTC+8)' },
+  { value: 'Asia/Kolkata', label: '印度标准时间 (UTC+5:30)' },
+  { value: 'Europe/London', label: '伦敦时间 (UTC+0/+1)' },
+  { value: 'Europe/Paris', label: '巴黎时间 (UTC+1/+2)' },
+  { value: 'Europe/Berlin', label: '柏林时间 (UTC+1/+2)' },
+  { value: 'Europe/Moscow', label: '莫斯科时间 (UTC+3)' },
+  { value: 'America/New_York', label: '纽约时间 (UTC-5/-4)' },
+  { value: 'America/Chicago', label: '芝加哥时间 (UTC-6/-5)' },
+  { value: 'America/Denver', label: '丹佛时间 (UTC-7/-6)' },
+  { value: 'America/Los_Angeles', label: '洛杉矶时间 (UTC-8/-7)' },
+  { value: 'America/Toronto', label: '多伦多时间 (UTC-5/-4)' },
+  { value: 'Australia/Sydney', label: '悉尼时间 (UTC+10/+11)' },
+  { value: 'Australia/Melbourne', label: '墨尔本时间 (UTC+10/+11)' },
+  { value: 'Pacific/Auckland', label: '奥克兰时间 (UTC+12/+13)' },
+  { value: 'UTC', label: '协调世界时 (UTC+0)' },
+];
+
 export default function ConfigPanel({ config, onConfigChange }: ConfigPanelProps) {
   const [form] = Form.useForm();
   const [isInsertPointEnabled, setIsInsertPointEnabled] = useState(config.enableInsertPointStrategy);
@@ -133,6 +155,27 @@ export default function ConfigPanel({ config, onConfigChange }: ConfigPanelProps
           </Form.Item>
         </Form.Item>
 
+        <Form.Item label={<span style={{ fontSize: '13px', fontWeight: 500 }}>时区设置</span>}>
+          <Form.Item name="timezone" style={{ marginBottom: 0 }}>
+            <Select
+              showSearch
+              placeholder="选择时区"
+              optionFilterProp="label"
+              filterOption={(input, option) => {
+                const label = typeof option?.label === 'string' ? option.label : String(option?.label ?? '');
+                return label.toLowerCase().includes(input.toLowerCase());
+              }}
+              getPopupContainer={getPopupContainer}
+            >
+              {timezones.map((tz) => (
+                <Select.Option key={tz.value} value={tz.value} label={tz.label}>
+                  {tz.label}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </Form.Item>
+
         <Alert
           message={<span style={{ fontWeight: 600, fontSize: '13px' }}>时间设置说明</span>}
           description={
@@ -147,6 +190,7 @@ export default function ConfigPanel({ config, onConfigChange }: ConfigPanelProps
               <li style={{ marginBottom: 4 }}>如果设置了结束时间，系统会在开始和结束时间之间均匀分配时间</li>
               <li style={{ marginBottom: 4 }}>如果设置了时间间隔，系统会按照指定间隔分配时间（负数会反转时间顺序）</li>
               <li style={{ marginBottom: 4 }}>如果开始时间大于结束时间，系统会自动反转轨迹点顺序</li>
+              <li style={{ marginBottom: 4 }}>时区设置用于处理时间转换，确保时间戳正确对应所选时区</li>
               <li>如果都没有设置，所有时间统一为开始时间</li>
             </ul>
           }

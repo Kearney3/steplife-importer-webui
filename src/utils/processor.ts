@@ -2,12 +2,94 @@ import { Point, Config, Row } from '../types';
 import { calculateInterpolatedPoints } from './pointcalc';
 
 /**
- * 将时间字符串转换为时间戳（秒）
+ * 获取指定时区在指定日期的 UTC 偏移量（毫秒）
  */
-function toTimestamp(timeStr: string): number {
+function getTimezoneOffset(timezone: string, date: Date): number {
+  try {
+    // 使用一个已知的 UTC 时间点
+    const utcTime = date.getTime();
+    
+    // 获取这个 UTC 时间在指定时区的本地时间字符串
+    const tzFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: timezone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+    
+    const tzStr = tzFormatter.format(date);
+    // 格式: "MM/DD/YYYY, HH:mm:ss"
+    const parts = tzStr.match(/(\d{2})\/(\d{2})\/(\d{4}),\s+(\d{2}):(\d{2}):(\d{2})/);
+    
+    if (parts) {
+      const [, month, day, year, hour, minute, second] = parts;
+      // 将这个时区本地时间解析为日期对象（作为本地时间）
+      const tzLocalDate = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}`);
+      
+      // 计算偏移：UTC 时间和时区本地时间的差异
+      // tzLocalDate 被解释为系统本地时间，我们需要计算它与 UTC 的差异
+      const tzLocalUtcTime = tzLocalDate.getTime();
+      const tzLocalOffset = tzLocalDate.getTimezoneOffset() * 60 * 1000;
+      const tzUtcTime = tzLocalUtcTime - tzLocalOffset;
+      
+      // 偏移量 = UTC 时间 - 时区本地时间对应的 UTC
+      return utcTime - tzUtcTime;
+    }
+    
+    return 0;
+  } catch (error) {
+    return 0;
+  }
+}
+
+/**
+ * 将时间字符串转换为时间戳（秒）
+ * 考虑时区设置，将输入时间视为指定时区的本地时间
+ */
+function toTimestamp(timeStr: string, timezone?: string): number {
   if (!timeStr) return 0;
-  const date = new Date(timeStr);
-  return Math.floor(date.getTime() / 1000);
+  
+  // 如果没有指定时区，使用默认行为
+  if (!timezone) {
+    const date = new Date(timeStr);
+    return Math.floor(date.getTime() / 1000);
+  }
+  
+  // 解析时间字符串 (格式: YYYY-MM-DD HH:mm:ss)
+  const parts = timeStr.match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+  if (!parts) {
+    // 如果格式不匹配，尝试使用 Date 构造函数
+    const date = new Date(timeStr);
+    return Math.floor(date.getTime() / 1000);
+  }
+  
+  const [, year, month, day, hour, minute, second] = parts;
+  
+  try {
+    // 将输入时间视为指定时区的本地时间，转换为 UTC 时间戳
+    // 创建一个日期对象，将其视为系统本地时间
+    const inputDate = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}`);
+    const inputUtcTime = inputDate.getTime();
+    const localOffsetMs = inputDate.getTimezoneOffset() * 60 * 1000;
+    
+    // 获取指定时区在此时刻的 UTC 偏移量
+    const tzOffsetMs = getTimezoneOffset(timezone, inputDate);
+    
+    // 调整时间戳：
+    // 1. 输入时间被解释为系统本地时间，转换为 UTC：inputUtcTime - localOffsetMs
+    // 2. 但输入时间实际上是时区 timezone 的本地时间，所以需要减去时区偏移
+    const adjustedTimestamp = inputUtcTime - localOffsetMs - tzOffsetMs;
+    
+    return Math.floor(adjustedTimestamp / 1000);
+  } catch (error) {
+    // 如果时区处理失败，回退到默认行为
+    const date = new Date(timeStr);
+    return Math.floor(date.getTime() / 1000);
+  }
 }
 
 /**
@@ -87,11 +169,11 @@ export function convertToStepLife(points: Point[], config: Config): Row[] {
   }
 
   let startTimestamp = config.pathStartTime
-    ? toTimestamp(config.pathStartTime)
+    ? toTimestamp(config.pathStartTime, config.timezone)
     : Math.floor(Date.now() / 1000);
 
   const endTimestamp = config.pathEndTime
-    ? toTimestamp(config.pathEndTime)
+    ? toTimestamp(config.pathEndTime, config.timezone)
     : 0;
 
   // 如果开始时间大于结束时间，反转轨迹点顺序并交换时间戳

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ConfigProvider, theme as antdTheme, Layout, Button, Space, Steps, Card } from 'antd';
-import { SunOutlined, MoonOutlined, UploadOutlined, SettingOutlined, PlayCircleOutlined, CheckCircleOutlined } from '@ant-design/icons';
+import { SunOutlined, MoonOutlined, UploadOutlined, SettingOutlined, PlayCircleOutlined, CheckCircleOutlined, GithubOutlined } from '@ant-design/icons';
 import zhCN from 'antd/locale/zh_CN';
 import { Config, FileProcessStatus } from './types';
 import FileUpload from './components/FileUpload';
@@ -22,6 +22,7 @@ const defaultConfig: Config = {
   defaultAltitude: 0,
   speedMode: 'auto',
   manualSpeed: 1.5,
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Shanghai',
 };
 
 function App() {
@@ -255,16 +256,28 @@ function App() {
             <Card className="title-card" style={{ marginBottom: 24 }}>
               <div className="title-content">
                 <div className="title-header">
-                  <h1 className="app-title">一生足迹数据导入器</h1>
-                  <Button
-                    type="text"
-                    icon={appTheme === 'light' ? <MoonOutlined /> : <SunOutlined />}
-                    onClick={toggleTheme}
-                    className="theme-toggle-btn"
-                    title={appTheme === 'light' ? '切换到夜间模式' : '切换到白天模式'}
-                  />
+                  <div className="title-text-wrapper">
+                    <h1 className="app-title">一生足迹数据导入器</h1>
+                    <p className="app-subtitle">将第三方轨迹数据转换为一生足迹CSV格式</p>
+                  </div>
+                  <Space className="title-actions" size="middle">
+                    <Button
+                      type="text"
+                      icon={<GithubOutlined />}
+                      onClick={() => window.open('https://github.com/Kearney3/steplife-importer-webui', '_blank')}
+                      className="github-btn"
+                      title="查看 GitHub 仓库"
+                      style={{ color: 'white' }}
+                    />
+                    <Button
+                      type="text"
+                      icon={appTheme === 'light' ? <MoonOutlined /> : <SunOutlined />}
+                      onClick={toggleTheme}
+                      className="theme-toggle-btn"
+                      title={appTheme === 'light' ? '切换到夜间模式' : '切换到白天模式'}
+                    />
+                  </Space>
                 </div>
-                <p className="app-subtitle">将第三方轨迹数据转换为一生足迹CSV格式</p>
               </div>
             </Card>
 

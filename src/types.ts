@@ -15,6 +15,7 @@ export interface Config {
   defaultAltitude: number;
   speedMode: 'auto' | 'manual';
   manualSpeed: number;
+  timezone: string;
 }
 
 export interface Row {

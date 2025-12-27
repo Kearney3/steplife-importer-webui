@@ -19,10 +19,10 @@
     </a>
   </p>
   <p>
-    <a href="https://steplife-importer.vercel.app/" target="_blank" style="font-size: 18px; font-weight: bold; text-decoration: none; margin-right: 16px;">
+    <a href="https://steplife-importer-webui.vercel.app/" target="_blank" style="font-size: 18px; font-weight: bold; text-decoration: none; margin-right: 16px;">
       🚀 Vercel 访问地址
     </a>
-    <a href="https://steplife-importer.netlify.app/" target="_blank" style="font-size: 18px; font-weight: bold; text-decoration: none;">
+    <a href="https://steplife-importer-webui.netlify.app/" target="_blank" style="font-size: 18px; font-weight: bold; text-decoration: none;">
       🌐 Netlify 访问地址
     </a>
   </p>

@@ -180,7 +180,27 @@
   padding: 0;
 }
 
+.title-header .toolkit-btn {
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+  border-radius: 12px;
+  min-width: 100px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 0 12px;
+}
+
 .title-header .github-btn:hover,
+.title-header .toolkit-btn:hover,
 .title-header .theme-toggle-btn:hover {
   background: rgba(255, 255, 255, 0.25);
   border-color: rgba(255, 255, 255, 0.5);
@@ -189,6 +209,7 @@
 }
 
 .title-header .github-btn:active,
+.title-header .toolkit-btn:active,
 .title-header .theme-toggle-btn:active {
   transform: translateY(0) scale(0.98);
 }
@@ -239,6 +260,14 @@
     width: 40px;
     height: 40px;
     font-size: 1.2rem;
+  }
+
+  .title-header .toolkit-btn {
+    min-width: 85px;
+    height: 40px;
+    font-size: 0.8rem;
+    gap: 4px;
+    padding: 0 8px;
   }
 }
 
@@ -358,7 +387,8 @@
     gap: 16px;
   }
 
-  .title-header .theme-toggle-btn {
+  .title-header .theme-toggle-btn,
+  .title-header .toolkit-btn {
     align-self: flex-end;
     margin-left: 0;
   }
@@ -419,10 +449,19 @@
     font-size: 0.85rem;
   }
 
+  .title-header .github-btn,
   .title-header .theme-toggle-btn {
     width: 40px;
     height: 40px;
     font-size: 1.1rem;
+  }
+
+  .title-header .toolkit-btn {
+    min-width: 75px;
+    height: 40px;
+    font-size: 0.75rem;
+    gap: 3px;
+    padding: 0 6px;
   }
 }
 
@@ -1029,7 +1068,8 @@
 
 /* 减少动画偏好 */
 @media (prefers-reduced-motion: reduce) {
-  .title-header .theme-toggle-btn {
+  .title-header .theme-toggle-btn,
+  .title-header .toolkit-btn {
     transition: none;
   }
 
@@ -1086,6 +1126,7 @@
 }
 
 [data-theme="dark"] .title-header .github-btn,
+[data-theme="dark"] .title-header .toolkit-btn,
 [data-theme="dark"] .title-header .theme-toggle-btn {
   background: rgba(30, 41, 59, 0.6);
   border-color: rgba(148, 163, 184, 0.3);
@@ -1093,6 +1134,7 @@
 }
 
 [data-theme="dark"] .title-header .github-btn:hover,
+[data-theme="dark"] .title-header .toolkit-btn:hover,
 [data-theme="dark"] .title-header .theme-toggle-btn:hover {
   background: rgba(51, 65, 85, 0.8);
   border-color: rgba(148, 163, 184, 0.5);

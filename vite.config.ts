@@ -7,7 +7,7 @@ export default defineConfig({
   base: process.env.GITHUB_PAGES ? '/steplife-importer-webui/' : '/',
   server: {
     port: 3000,
-    host: '0.0.0.0',
+    host: 'localhost',
     open: true
   }
 }) 

@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { ConfigProvider, theme as antdTheme, Layout, Button, Space, Steps, Card, Switch, Modal, Tabs } from 'antd';
-import { SunOutlined, MoonOutlined, UploadOutlined, SettingOutlined, PlayCircleOutlined, CheckCircleOutlined, GithubOutlined, MergeCellsOutlined } from '@ant-design/icons';
+import { SunOutlined, MoonOutlined, UploadOutlined, SettingOutlined, PlayCircleOutlined, CheckCircleOutlined, GithubOutlined, MergeCellsOutlined, RetweetOutlined, ToolOutlined } from '@ant-design/icons';
 import zhCN from 'antd/locale/zh_CN';
 import { Config, FileProcessStatus, Point } from './types';
 import FileUpload from './components/FileUpload';
 import ConfigPanel from './components/ConfigPanel';
 import StatusPanel from './components/StatusPanel';
 import CSVMerge from './components/CSVMerge';
+import TrackReverse from './components/TrackReverse';
 import { parseFile } from './utils/fileParser';
 import { convertToStepLife } from './utils/processor';
 import { generateCSV, downloadCSV } from './utils/csv';
@@ -33,8 +34,8 @@ function App() {
     return (savedTheme === 'dark') ? 'dark' : 'light';
   });
 
-  // 工具模式：'convert' 或 'merge'
-  const [toolMode, setToolMode] = useState<'convert' | 'merge'>('convert');
+  // 工具模式：'convert'、'merge' 或 'reverse'
+  const [toolMode, setToolMode] = useState<'convert' | 'merge' | 'reverse'>('convert');
 
   const [config, setConfig] = useState<Config>(defaultConfig);
   const [files, setFiles] = useState<File[]>([]);
@@ -512,6 +513,16 @@ function App() {
                       className="theme-toggle-btn"
                       title={appTheme === 'light' ? '切换到夜间模式' : '切换到白天模式'}
                     />
+                    <Button
+                      type="text"
+                      icon={<ToolOutlined />}
+                      onClick={() => window.open('https://github.com/Kearney3/StepLife-Toolkit', '_blank')}
+                      className="toolkit-btn"
+                      title="查看一生足迹工具箱"
+                      style={{ color: 'white' }}
+                    >
+                      更多工具
+                    </Button>
                   </Space>
                 </div>
               </div>
@@ -521,7 +532,7 @@ function App() {
             <Card style={{ marginBottom: 24 }}>
               <Tabs
                 activeKey={toolMode}
-                onChange={(key) => setToolMode(key as 'convert' | 'merge')}
+                onChange={(key) => setToolMode(key as 'convert' | 'merge' | 'reverse')}
                 items={[
                   {
                     key: 'convert',
@@ -676,6 +687,16 @@ function App() {
                       </Space>
                     ),
                     children: <CSVMerge />,
+                  },
+                  {
+                    key: 'reverse',
+                    label: (
+                      <Space>
+                        <RetweetOutlined />
+                        轨迹反转工具
+                      </Space>
+                    ),
+                    children: <TrackReverse />,
                   },
                 ]}
               />

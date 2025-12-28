@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ConfigProvider, theme as antdTheme, Layout, Button, Space, Steps, Card, Switch, Modal, Tabs } from 'antd';
-import { SunOutlined, MoonOutlined, UploadOutlined, SettingOutlined, PlayCircleOutlined, CheckCircleOutlined, GithubOutlined, MergeCellsOutlined, RetweetOutlined, ToolOutlined } from '@ant-design/icons';
+import { SunOutlined, MoonOutlined, UploadOutlined, SettingOutlined, PlayCircleOutlined, CheckCircleOutlined, GithubOutlined, MergeCellsOutlined, RetweetOutlined, ToolOutlined, LineChartOutlined } from '@ant-design/icons';
 import zhCN from 'antd/locale/zh_CN';
 import { Config, FileProcessStatus, Point } from './types';
 import FileUpload from './components/FileUpload';
@@ -8,6 +8,7 @@ import ConfigPanel from './components/ConfigPanel';
 import StatusPanel from './components/StatusPanel';
 import CSVMerge from './components/CSVMerge';
 import TrackReverse from './components/TrackReverse';
+import CSVInterpolation from './components/CSVInterpolation';
 import { parseFile } from './utils/fileParser';
 import { convertToStepLife } from './utils/processor';
 import { generateCSV, downloadCSV } from './utils/csv';
@@ -34,8 +35,8 @@ function App() {
     return (savedTheme === 'dark') ? 'dark' : 'light';
   });
 
-  // 工具模式：'convert'、'merge' 或 'reverse'
-  const [toolMode, setToolMode] = useState<'convert' | 'merge' | 'reverse'>('convert');
+  // 工具模式：'convert'、'merge'、'reverse' 或 'csv-interpolation'
+  const [toolMode, setToolMode] = useState<'convert' | 'merge' | 'reverse' | 'csv-interpolation'>('convert');
 
   const [config, setConfig] = useState<Config>(defaultConfig);
   const [files, setFiles] = useState<File[]>([]);
@@ -532,7 +533,8 @@ function App() {
             <Card style={{ marginBottom: 24 }}>
               <Tabs
                 activeKey={toolMode}
-                onChange={(key) => setToolMode(key as 'convert' | 'merge' | 'reverse')}
+                onChange={(key) => setToolMode(key as 'convert' | 'merge' | 'reverse' | 'csv-interpolation')}
+                type="card"
                 items={[
                   {
                     key: 'convert',
@@ -697,6 +699,16 @@ function App() {
                       </Space>
                     ),
                     children: <TrackReverse />,
+                  },
+                  {
+                    key: 'csv-interpolation',
+                    label: (
+                      <Space>
+                        <LineChartOutlined />
+                        CSV插值工具
+                      </Space>
+                    ),
+                    children: <CSVInterpolation />,
                   },
                 ]}
               />

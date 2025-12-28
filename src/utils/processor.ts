@@ -179,15 +179,20 @@ export function convertToStepLife(points: Point[], config: Config): Row[] {
   // 计算总点数（包括插值点）
   let totalPoints = processedPoints.length;
   if (config.enableInsertPointStrategy) {
-    totalPoints = 1; // 第一个点
-    for (let i = 1; i < processedPoints.length; i++) {
+    totalPoints = 1; // A点直接写入
+    // 只对中间段落进行插值，跳过第一段（A-B）和最后一段（E-F）
+    // 例如 A-B-C-D-E-F，只插值 B-C, C-D, D-E
+    for (let i = 2; i < processedPoints.length - 1; i++) {
       const interpolated = calculateInterpolatedPoints(
         processedPoints[i - 1],
         processedPoints[i],
         config.insertPointDistance
       );
+      // 插值结果包含终点，终点是当前点，需要被包含在总数中
       totalPoints += interpolated.length;
     }
+    // B点和最后一个点直接添加，不插值
+    totalPoints += 2;
   }
 
   // 计算时间间隔
@@ -211,8 +216,10 @@ export function convertToStepLife(points: Point[], config: Config): Row[] {
   for (let i = 0; i < processedPoints.length; i++) {
     const point = processedPoints[i];
 
-    // 第0个坐标或者不需要插入值，不需要计算中间点，直接写入
-    if (i === 0 || !config.enableInsertPointStrategy) {
+    // 第0个坐标、第1个坐标（B点）、最后一个坐标，或者不需要插入值，不需要计算中间点，直接写入
+    // 对于插值模式：A点、B点、F点直接写入，避免A-B和E-F之间的插值
+    // 例如 A-B-C-D-E-F，只插值 B-C, C-D, D-E 之间的连接
+    if (i === 0 || i === 1 || i === processedPoints.length - 1 || !config.enableInsertPointStrategy) {
       let currentTimestamp = finalStartTimestamp;
       if (useEndTime) {
         currentTimestamp = finalStartTimestamp + pointIndex * timeInterval;
@@ -241,32 +248,58 @@ export function convertToStepLife(points: Point[], config: Config): Row[] {
       rows.push(row);
       pointIndex++;
     } else {
-      // 需要插值
-      const interpolatedPoints = calculateInterpolatedPoints(
-        processedPoints[i - 1],
-        point,
-        config.insertPointDistance
-      );
+      // 需要插值，但跳过最后一段（避免E-F之间的插值）
+      // 例如 A-B-C-D-E-F，只插值 B-C, C-D, D-E，不插值 E-F
+      // 注意：calculateInterpolatedPoints 返回的插值点包含终点
+      // 当前点(point)作为插值的终点会被包含在插值结果中
+      // 由于当前点不会被直接写入（因为条件 i === 0 || i === 1 || i === length - 1 为假），
+      // 所以我们需要包含插值结果中的所有点（包括终点），以确保当前点被添加
+      // 但是，我们需要确保最后一个需要插值的段的终点（如E）被正确添加
+      if (i < processedPoints.length - 1) {
+        const interpolatedPoints = calculateInterpolatedPoints(
+          processedPoints[i - 1],
+          point,
+          config.insertPointDistance
+        );
 
-      for (let j = 0; j < interpolatedPoints.length; j++) {
-        const interpolatedPoint = interpolatedPoints[j];
-        let currentTimestamp = finalStartTimestamp;
+        // 对于最后一个需要插值的段（i === processedPoints.length - 2），
+        // 我们需要包含所有插值点（包括终点），因为终点（如E）不会被后续处理直接写入
+        // 对于其他段，我们也包含所有插值点（包括终点），因为终点是当前点，需要被添加
+        // 这样可以确保所有点都被正确添加，避免首尾意外相连
+        for (let j = 0; j < interpolatedPoints.length; j++) {
+          const interpolatedPoint = interpolatedPoints[j];
+          let currentTimestamp = finalStartTimestamp;
 
-        if (useEndTime) {
-          currentTimestamp = finalStartTimestamp + pointIndex * timeInterval;
-          // 如果是最后一个点，使用精确的结束时间
-          if (i === processedPoints.length - 1 && j === interpolatedPoints.length - 1) {
-            currentTimestamp = finalEndTimestamp;
+          if (useEndTime) {
+            currentTimestamp = finalStartTimestamp + pointIndex * timeInterval;
+          } else if (useTimeInterval) {
+            currentTimestamp = finalStartTimestamp + pointIndex * timeInterval;
           }
-        } else if (useTimeInterval) {
-          currentTimestamp = finalStartTimestamp + pointIndex * timeInterval;
-        }
 
+          const row: Row = {
+            dataTime: currentTimestamp,
+            locType: 0,
+            longitude: interpolatedPoint.longitude,
+            latitude: interpolatedPoint.latitude,
+            heading: 0,
+            accuracy: 0,
+            speed: calculateSpeed(config, processedPoints, i),
+            distance: 0,
+            isBackForeground: 0,
+            stepType: 0,
+            altitude: config.defaultAltitude,
+          };
+
+          rows.push(row);
+          pointIndex++;
+        }
+      } else {
+        // 如果到达最后一个点，直接写入（不应该进入这个分支，因为已经在上面处理了）
         const row: Row = {
-          dataTime: currentTimestamp,
+          dataTime: finalStartTimestamp,
           locType: 0,
-          longitude: interpolatedPoint.longitude,
-          latitude: interpolatedPoint.latitude,
+          longitude: point.longitude,
+          latitude: point.latitude,
           heading: 0,
           accuracy: 0,
           speed: calculateSpeed(config, processedPoints, i),
@@ -275,7 +308,6 @@ export function convertToStepLife(points: Point[], config: Config): Row[] {
           stepType: 0,
           altitude: config.defaultAltitude,
         };
-
         rows.push(row);
         pointIndex++;
       }

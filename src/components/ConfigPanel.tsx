@@ -86,10 +86,47 @@ export default function ConfigPanel({ config, onConfigChange }: ConfigPanelProps
       ...config,
       pathStartTime: config.pathStartTime ? dayjs(config.pathStartTime, 'YYYY-MM-DD HH:mm:ss') : null,
       pathEndTime: config.pathEndTime ? dayjs(config.pathEndTime, 'YYYY-MM-DD HH:mm:ss') : null,
+      // 确保 insertPointDistance 有值，即使字段还未渲染
+      insertPointDistance: config.insertPointDistance !== undefined && config.insertPointDistance !== null 
+        ? config.insertPointDistance 
+        : 100,
     };
     form.setFieldsValue(formValues);
     setIsInsertPointEnabled(config.enableInsertPointStrategy);
-  }, [config, form]);
+    
+    // 如果启用插点功能，确保config中有insertPointDistance值
+    if (config.enableInsertPointStrategy && (!config.insertPointDistance || config.insertPointDistance === 0)) {
+      const defaultValue = 100;
+      onConfigChange({ ...config, insertPointDistance: defaultValue });
+    }
+  }, [config, form, onConfigChange]);
+
+  // 当启用插点功能时，确保 insertPointDistance 字段有值，并同步到config
+  useEffect(() => {
+    if (isInsertPointEnabled) {
+      // 使用setTimeout确保字段已经渲染
+      setTimeout(() => {
+        const currentValue = form.getFieldValue('insertPointDistance');
+        const defaultValue = config.insertPointDistance || 100;
+        
+        // 如果字段没有值或者是0，设置默认值
+        if (!currentValue || currentValue === undefined || currentValue === null || currentValue === 0) {
+          form.setFieldsValue({ 
+            insertPointDistance: defaultValue 
+          });
+          // 确保config也被更新
+          if (config.insertPointDistance !== defaultValue) {
+            onConfigChange({ ...config, insertPointDistance: defaultValue });
+          }
+        } else {
+          // 如果字段有值但config中没有或不同，同步到config
+          if (config.insertPointDistance !== currentValue) {
+            onConfigChange({ ...config, insertPointDistance: currentValue });
+          }
+        }
+      }, 0);
+    }
+  }, [isInsertPointEnabled, form, config, onConfigChange]);
 
   const handleValuesChange = (changedValues: any, allValues: any) => {
     // 如果开关状态改变，立即更新本地状态
@@ -107,6 +144,10 @@ export default function ConfigPanel({ config, onConfigChange }: ConfigPanelProps
       pathEndTime: allValues.pathEndTime 
         ? (allValues.pathEndTime as Dayjs).format('YYYY-MM-DD HH:mm:ss')
         : '',
+      // 确保 insertPointDistance 有值，如果没有则使用默认值100
+      insertPointDistance: allValues.insertPointDistance !== undefined && allValues.insertPointDistance !== null
+        ? allValues.insertPointDistance
+        : (config.insertPointDistance || 100),
     };
     
     onConfigChange(configUpdate);
@@ -301,8 +342,27 @@ export default function ConfigPanel({ config, onConfigChange }: ConfigPanelProps
               onChange={(checked) => {
                 // 立即更新本地状态，确保UI立即响应
                 setIsInsertPointEnabled(checked);
-                // 表单值更新会触发 handleValuesChange
-                form.setFieldsValue({ enableInsertPointStrategy: checked });
+                // 当启用插点时，确保 insertPointDistance 有默认值并同步到config
+                if (checked) {
+                  const currentDistance = form.getFieldValue('insertPointDistance');
+                  const defaultValue = config.insertPointDistance || 100;
+                  
+                  if (!currentDistance || currentDistance === undefined || currentDistance === null || currentDistance === 0) {
+                    form.setFieldsValue({ 
+                      enableInsertPointStrategy: checked,
+                      insertPointDistance: defaultValue
+                    });
+                    // 确保config也被更新
+                    onConfigChange({ ...config, enableInsertPointStrategy: checked, insertPointDistance: defaultValue });
+                  } else {
+                    form.setFieldsValue({ enableInsertPointStrategy: checked });
+                    // 确保config也被更新
+                    onConfigChange({ ...config, enableInsertPointStrategy: checked, insertPointDistance: currentDistance });
+                  }
+                } else {
+                  form.setFieldsValue({ enableInsertPointStrategy: checked });
+                  onConfigChange({ ...config, enableInsertPointStrategy: checked });
+                }
               }}
             />
             <span 
@@ -318,8 +378,27 @@ export default function ConfigPanel({ config, onConfigChange }: ConfigPanelProps
                 const newValue = !currentValue;
                 // 立即更新本地状态
                 setIsInsertPointEnabled(newValue);
-                // 表单值更新会触发 handleValuesChange
-                form.setFieldsValue({ enableInsertPointStrategy: newValue });
+                // 当启用插点时，确保 insertPointDistance 有默认值并同步到config
+                if (newValue) {
+                  const currentDistance = form.getFieldValue('insertPointDistance');
+                  const defaultValue = config.insertPointDistance || 100;
+                  
+                  if (!currentDistance || currentDistance === undefined || currentDistance === null || currentDistance === 0) {
+                    form.setFieldsValue({ 
+                      enableInsertPointStrategy: newValue,
+                      insertPointDistance: defaultValue
+                    });
+                    // 确保config也被更新
+                    onConfigChange({ ...config, enableInsertPointStrategy: newValue, insertPointDistance: defaultValue });
+                  } else {
+                    form.setFieldsValue({ enableInsertPointStrategy: newValue });
+                    // 确保config也被更新
+                    onConfigChange({ ...config, enableInsertPointStrategy: newValue, insertPointDistance: currentDistance });
+                  }
+                } else {
+                  form.setFieldsValue({ enableInsertPointStrategy: newValue });
+                  onConfigChange({ ...config, enableInsertPointStrategy: newValue });
+                }
               }}
             >
               启用轨迹插点
@@ -360,7 +439,12 @@ export default function ConfigPanel({ config, onConfigChange }: ConfigPanelProps
                     label={<span style={{ fontSize: '13px', fontWeight: 500 }}>插点距离阈值 (米)</span>} 
                     style={{ marginBottom: 12 }}
                   >
-                    <Form.Item name="insertPointDistance" style={{ marginBottom: 0 }}>
+                    <Form.Item 
+                      name="insertPointDistance" 
+                      style={{ marginBottom: 0 }}
+                      preserve={true}
+                      initialValue={config.insertPointDistance || 100}
+                    >
                       <InputNumber
                         min={1}
                         step={0.1}

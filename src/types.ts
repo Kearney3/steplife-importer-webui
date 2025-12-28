@@ -48,3 +48,13 @@ export interface FileWithIndex {
   file: File;
   index: number;
 }
+
+// CSV插值工具专用配置
+export interface CSVInterpolationConfig {
+  insertPointDistance: number;
+  defaultAltitude: number;
+  speedMode: 'auto' | 'manual';
+  manualSpeed: number;
+  filterStartPercent: number; // 过滤前N%的点（0-100，前部+后部不超过100%）
+  filterEndPercent: number; // 过滤后N%的点（0-100，前部+后部不超过100%）
+}

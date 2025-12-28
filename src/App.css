@@ -719,6 +719,10 @@
 }
 
 /* 表单标签优化 */
+.ant-form-item-label {
+  text-align: left;
+}
+
 .ant-form-item-label > label {
   font-weight: 500;
   color: #374151;
@@ -863,10 +867,38 @@
 }
 
 /* 表单项美化 */
+.ant-form-item-label {
+  text-align: left;
+}
+
 .ant-form-item-label > label {
   font-weight: 600;
   color: #374151;
   font-size: 14px;
+}
+
+/* 配置面板中的表单项标签优化，调整位置避免过于偏左 */
+.config-card .ant-form-item-label {
+  text-align: left;
+  width: 100%;
+}
+
+.config-card .ant-form-item-label > label {
+  display: block;
+  width: 100%;
+}
+
+/* 确保表单项标签文字不会过于偏左，保持适当的对齐 */
+.config-card .ant-form-item-vertical .ant-form-item-label {
+  padding: 0;
+  margin: 0 0 8px 0;
+}
+
+.config-card .ant-form-item-vertical .ant-form-item-label > label {
+  padding: 0;
+  margin: 0;
+  height: auto;
+  line-height: 1.5715;
 }
 
 /* 输入框美化 */
@@ -1029,6 +1061,64 @@
 .ant-tabs-tab-active {
   background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
+}
+
+/* 工具tab栏自适应宽度平铺 */
+.ant-tabs-card > .ant-tabs-nav {
+  margin-bottom: 16px;
+  padding: 0;
+}
+
+.ant-tabs-card > .ant-tabs-nav .ant-tabs-nav-list {
+  display: flex;
+  width: 100%;
+}
+
+.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  padding: 12px 16px;
+  white-space: nowrap;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-btn {
+  width: 100%;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 确保tab内容居中 */
+.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab .anticon {
+  margin-right: 6px;
+}
+
+/* 确保tab内容区域有适当的间距 */
+.ant-tabs-card > .ant-tabs-content-holder {
+  padding-top: 0;
+  margin-top: 0;
+}
+
+.ant-tabs-card > .ant-tabs-content-holder > .ant-tabs-content {
+  margin-top: 0;
+}
+
+.ant-tabs-card > .ant-tabs-content-holder > .ant-tabs-content > .ant-tabs-tabpane {
+  padding-top: 0;
+}
+
+/* 确保包含tab的Card有适当的padding，避免重叠 */
+.ant-card .ant-tabs-card {
+  margin: 0;
+}
+
+.ant-card .ant-tabs-card > .ant-tabs-nav {
+  margin-bottom: 16px !important;
 }
 
 /* 文件上传区域美化 */
